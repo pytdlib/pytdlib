@@ -12,7 +12,7 @@ with open(os.path.join('pytdlib', 'version.py'), encoding='utf-8') as f:
     version = re.findall(r"__version__ = \"(.+)\"", f.read())[0]
 
 setup(
-    name="pytdlib",
+    name="Pytdlib",
     version=version,
     description="Telegram TDLib Client Library for Python",
     long_description=long_description,
