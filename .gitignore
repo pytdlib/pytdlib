@@ -107,3 +107,4 @@ venv.bak/
 # Pytdlib generated code
 pytdlib/api/functions/
 pytdlib/api/types/
+pytdlib/api/utils/all_types.py
