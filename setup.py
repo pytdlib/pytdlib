@@ -1,14 +1,20 @@
 """The setup and build script for the pytdlib library."""
 
 from setuptools import setup, find_packages
+from sys import argv
 import os
 import re
 
+from generate.api import generator
 
-with open('README.md', 'r', encoding='utf-8') as f:
+if len(argv) > 1 and argv[1] in ["bdist_wheel", "install"]:
+    generator.start()
+
+
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
-with open(os.path.join('pytdlib', 'version.py'), encoding='utf-8') as f:
+with open(os.path.join("pytdlib", "version.py"), encoding="utf-8") as f:
     version = re.findall(r"__version__ = \"(.+)\"", f.read())[0]
 
 setup(

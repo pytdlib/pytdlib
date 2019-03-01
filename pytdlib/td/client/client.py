@@ -37,6 +37,8 @@ class TDClient:
             query = query.encode('utf-8')
         elif isinstance(query, dict):
             query = json.dumps(query).encode('utf-8')
+        elif not isinstance(query, bytes):
+            query = bytes(query)
         self._json_client.send(self.client_id, query)
 
     def execute(self, query: str or dict or bytes):
@@ -44,6 +46,9 @@ class TDClient:
             query = query.encode('utf-8')
         elif isinstance(query, dict):
             query = json.dumps(query).encode('utf-8')
+        elif not isinstance(query, bytes):
+            query = bytes(query)
+
         result = self._json_client.execute(self.client_id, query)
         if result:
             result = json.loads(result.decode('utf-8'))

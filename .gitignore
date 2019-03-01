@@ -103,3 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 .idea/
+
+# Pytdlib generated code
+pytdlib/api/functions/
+pytdlib/api/types/
