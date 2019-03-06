@@ -41,6 +41,9 @@ app_json.client.send(functions.GetAuthorizationState(extra=1.01234))
 while True:
     event = app_json.client.receive(timeout=1.0)
     if event:
+        # get extra value from event
+        extra = event.get("@extra", None)
+
         event = Object.read(event)
         # if client is closed, we need to destroy it and create new client
         if event.ID == 'updateAuthorizationState' and event.authorization_state.ID == 'authorizationStateClosed':
