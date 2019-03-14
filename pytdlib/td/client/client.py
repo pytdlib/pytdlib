@@ -33,21 +33,28 @@ class TDClient:
         return result
 
     def send(self, query: str or dict or bytes):
+
         if isinstance(query, str):
             query = query.encode('utf-8')
         elif isinstance(query, dict):
             query = json.dumps(query).encode('utf-8')
-        elif not isinstance(query, bytes):
+        elif hasattr(query, "__bytes__"):
             query = bytes(query)
+        elif not isinstance(query, bytes):
+            return
+
         self._json_client.send(self.client_id, query)
 
     def execute(self, query: str or dict or bytes):
+
         if isinstance(query, str):
             query = query.encode('utf-8')
         elif isinstance(query, dict):
             query = json.dumps(query).encode('utf-8')
-        elif not isinstance(query, bytes):
+        elif hasattr(query, "__bytes__"):
             query = bytes(query)
+        elif not isinstance(query, bytes):
+            return
 
         result = self._json_client.execute(self.client_id, query)
         if result:
