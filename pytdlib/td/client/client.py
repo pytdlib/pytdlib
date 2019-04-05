@@ -20,6 +20,10 @@ class TDClient:
             raise ValueError("At least one of tdjson or json_client argument is require")
         self.client_id = None if client_id is not None else client_id
 
+    @property
+    def _tdjson(self)-> "CDLL":
+        return self._json_client._tdjson
+
     def create(self, force: bool=False):
         if self.client_id is not None and not force:
             return

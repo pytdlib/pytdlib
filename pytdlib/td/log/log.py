@@ -8,7 +8,7 @@ class SetLogPath:
         self._td_set_file_path.restype = c_int
         self._td_set_file_path.argtypes = [c_char_p]
 
-    def set_file_path(self, path: str):
+    def set_file_path(self, path: bytes):
         """
         Sets the path to the file where the internal TDLib log will be written.
         By default TDLib writes logs to stderr or an OS specific log. Use this method
@@ -16,8 +16,7 @@ class SetLogPath:
         """
         return self._td_set_file_path(path)
 
-    def __call__(self, path: str):
-        return self.set_file_path(path)
+    __call__ = set_file_path
 
 
 class SetLogSize:
@@ -35,8 +34,7 @@ class SetLogSize:
         """
         return self._td_set_max_file_size(size)
 
-    def __call__(self, size: int):
-        return self.set_max_file_size(size)
+    __call__ = set_max_file_size
 
 
 class SetLogLevel:
@@ -53,8 +51,7 @@ class SetLogLevel:
         """
         return self._td_set_verbosity_level(level)
 
-    def __call__(self, level: int):
-        return self.set_verbosity_level(level)
+    __call__ = set_verbosity_level
 
 
 class SetLogErrorCallback:
@@ -73,5 +70,4 @@ class SetLogErrorCallback:
         """
         return self._td_set_fatal_error_callback(self._td_fatal_error_callback_type(func))
 
-    def __call__(self, func: callable):
-        return self.set_fatal_error_callback(func)
+    __call__ = set_fatal_error_callback

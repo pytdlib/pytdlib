@@ -5,6 +5,7 @@ from .log import SetLogPath, SetLogSize, SetLogLevel, SetLogErrorCallback
 class TDLog(SetLogPath, SetLogSize, SetLogLevel, SetLogErrorCallback):
     """This class represents initialized Python wrapper for library log functions."""
     def __init__(self, tdjson: CDLL):
+        self._tdjson = tdjson
         SetLogPath.__init__(self, tdjson)
         SetLogSize.__init__(self, tdjson)
         SetLogLevel.__init__(self, tdjson)

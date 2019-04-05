@@ -14,8 +14,7 @@ class Create:
         """
         return self._td_json_client_create()
 
-    def __call__(self) -> int:
-        return self.create()
+    __call__ = create
 
 
 class Receive:
@@ -34,8 +33,7 @@ class Receive:
         """
         return self._td_json_client_receive(client_id, timeout)
 
-    def __call__(self, client_id: int, timeout: float = 1.0) -> bytes:
-        return self.receive(client_id, timeout)
+    __call__ = receive
 
 
 class Send:
@@ -51,8 +49,7 @@ class Send:
         """
         return self._td_json_client_send(client_id, req)
 
-    def __call__(self, client_id: int, req: bytes):
-        return self._td_json_client_send(client_id, req)
+    __call__ = send
 
 
 class Execute:
@@ -71,8 +68,7 @@ class Execute:
         """
         return self._td_json_client_execute(client_id, req)
 
-    def __call__(self, client_id: int, req: bytes) -> bytes:
-        return self.execute(client_id, req)
+    __call__ = execute
 
 
 class Destroy:
@@ -89,5 +85,4 @@ class Destroy:
         """
         return self._td_json_client_destroy(client_id)
 
-    def __call__(self, client_id: int):
-        return self.destroy(client_id)
+    __call__ = destroy
