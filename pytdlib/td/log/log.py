@@ -3,8 +3,8 @@ from ctypes import (CDLL, c_int, c_char_p, c_longlong, CFUNCTYPE)
 
 class SetLogPath:
 
-    def __init__(self, td_library: CDLL):
-        self._td_set_file_path = td_library.td_set_log_file_path
+    def __init__(self, td_json_library: CDLL):
+        self._td_set_file_path = td_json_library.td_set_log_file_path
         self._td_set_file_path.restype = c_int
         self._td_set_file_path.argtypes = [c_char_p]
 
@@ -21,8 +21,8 @@ class SetLogPath:
 
 class SetLogSize:
 
-    def __init__(self, td_library: CDLL):
-        self._td_set_max_file_size = td_library.td_set_log_max_file_size
+    def __init__(self, td_json_library: CDLL):
+        self._td_set_max_file_size = td_json_library.td_set_log_max_file_size
         self._td_set_max_file_size.restype = None
         self._td_set_max_file_size.argtypes = [c_longlong]
 
@@ -39,8 +39,8 @@ class SetLogSize:
 
 class SetLogLevel:
 
-    def __init__(self, td_library: CDLL):
-        self._td_set_verbosity_level = td_library.td_set_log_verbosity_level
+    def __init__(self, td_json_library: CDLL):
+        self._td_set_verbosity_level = td_json_library.td_set_log_verbosity_level
         self._td_set_verbosity_level.restype = None
         self._td_set_verbosity_level.argtypes = [c_int]
 
@@ -56,8 +56,8 @@ class SetLogLevel:
 
 class SetLogErrorCallback:
 
-    def __init__(self, td_library: CDLL):
-        self._td_set_fatal_error_callback = td_library.td_set_log_fatal_error_callback
+    def __init__(self, td_json_library: CDLL):
+        self._td_set_fatal_error_callback = td_json_library.td_set_log_fatal_error_callback
         self._td_fatal_error_callback_type = CFUNCTYPE(None, c_char_p)
         self._td_set_fatal_error_callback.restype = None
         self._td_set_fatal_error_callback.argtypes = [self._td_fatal_error_callback_type]

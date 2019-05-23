@@ -1,9 +1,11 @@
 from collections import OrderedDict
-from json import JSONEncoder, dumps
+from json import dumps
 
 
 class Object:
     all = {}
+    __slots__ = []
+    ID = 'object'
 
     @staticmethod
     def read(q: dict, *args):
@@ -11,33 +13,68 @@ class Object:
             return None
         return Object.all[q["@type"]].read(q, *args)
 
-    def __str__(self) -> str:
-        return dumps(self, cls=Encoder, indent=4)
+    def __str__(self, indent: int = 1) -> str:
+        def stringify(obj, indent):
+            if isinstance(obj, Object):
+                result = [obj.ID[:1].upper(), obj.ID[1:], '(', '\n']
+                for attr in obj.__slots__:
+                    value = getattr(obj, attr)
 
-    def __bytes__(self):
-        return dumps(self, cls=Encoder).encode('utf-8')
+                    if value is None:
+                        continue
 
-    def __bool__(self) -> bool:
-        return True
+                    result.append('\t' * indent)
+                    result.append(attr)
+                    result.append('=')
 
-    def __eq__(self, other) -> bool:
-        return self.__dict__ == other.__dict__
+                    def sub_stringify(value, indent):
+                        if isinstance(value, Object):
+                            return stringify(value, indent + 1)
+                        elif isinstance(value, (str, int, bytes)):
+                            return repr(value)
+                        elif hasattr(value, '__iter__'):
+                            res = ['[\n']
+                            indent += 1
+                            for x in value:
+                                res.append('\t' * indent)
+                                res.append(stringify(x, indent + 1))
+                                res.append(',\n')
+                            indent -= 1
+                            res.append('\t' * indent)
+                            res.append(']')
+                            return ''.join(res)
+                        else:
+                            return repr(value)
+
+                    result.append(sub_stringify(value, indent))
+                    result.append(',\n')
+                else:
+                    result[-1] = '\n'
+
+                result.append('\t' * (indent - 1))
+                result.append(')')
+                return ''.join(result)
+            else:
+                return repr(obj)
+
+        return stringify(self, indent)
+
+    def __bytes__(self) -> bytes:
+        def default(obj: Object):
+            r = OrderedDict(
+                [('@type', obj.ID)]
+                + [(attr, getattr(obj, attr))
+                   for attr in obj.__slots__
+                   if getattr(obj, attr) is not None]
+            )
+            if r.get("extra"):
+                r["@extra"] = r.pop("extra")
+            return r
+
+        return dumps(self, default=default).encode('utf-8')
 
     def __len__(self) -> int:
-        return len(self.__str__())
-
-    def __call__(self):
-        pass
+        return len(self.__bytes__())
 
     def __getitem__(self, item):
         return getattr(self, item)
-
-
-class Encoder(JSONEncoder):
-    def default(self, o: Object):
-        content = o.__dict__
-        o = getattr(o, "ID", "")
-        r = OrderedDict([("@type", o)] + [i for i in content.items()])
-        if r.get("extra"):
-            r["@extra"] = r.pop("extra")
-        return r

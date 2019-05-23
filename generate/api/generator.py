@@ -55,7 +55,7 @@ def start():
     shutil.rmtree("{}/types/".format(DESTINATION), ignore_errors=True)
     shutil.rmtree("{}/functions/".format(DESTINATION), ignore_errors=True)
 
-    with open('{}/source/td_api.tl'.format(HOME), encoding='utf-8') as f:
+    with open('{}/scheme/td_api.tl'.format(HOME), encoding='utf-8') as f:
         scheme = f.read()
 
     with open("{}/template/class.txt".format(HOME), encoding="utf-8") as f:
@@ -159,6 +159,7 @@ def start():
             doc_args = str(c.doc) + "\n\n    No parameters required."
             imports = ""
             read_args = 'if q.get("@type"):\n            return Object.read(q)'
+            slots = ''
             arguments = ""
             fields = "pass"
             return_arguments = ""
@@ -242,7 +243,7 @@ def start():
                 doc_args = "Args:\n        " + "\n        ".join(
                     "{}:\n            {}".format(
                         doc_args[i],
-                        "".join(
+                        ". ".join(
                             darg[1:] if darg.startswith(' ') else darg
                             for darg in c.doc[i + 1].split(' ', 1)[1].split('.'))
                     ) for i in range(len(doc_args)))
@@ -255,6 +256,10 @@ def start():
                 c.name) + doc_args
             doc_args += "\n\n    Returns:\n        " + c.return_type
             doc_args += "\n\n    Raises:\n        :class:`pytdlib.Error`"
+
+            slots = ", ".join(
+                [repr(i[0]) for i in c.args]
+            ) if c.args else ""
 
             arguments = ", " + ", ".join(
                 [i[0] for i in c.args]
@@ -275,6 +280,8 @@ def start():
                 template.format(
                     notice=notice,
                     imports=imports,
+                    slots=slots,
+                    s_extra=extra and ((slots and ', ' or '') + '\'extra\'') or '',
                     extra=extra,
                     has_extra=has_extra,
                     docstring=doc_args,

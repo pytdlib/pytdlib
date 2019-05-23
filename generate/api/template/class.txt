@@ -7,13 +7,14 @@ class {class_name}(Object):
     """
     {docstring}
     """
-    ID = "{ID}"
+    __slots__ = [{slots}{s_extra}]
+    ID = '{ID}'
 
     def __init__(self{arguments}{extra}, **kwargs):
         {has_extra}
         {fields}
 
     @staticmethod
-    def read(q: dict, *args) -> "{return_read}":
+    def read(q: dict, *args) -> '{return_read}':
         {read}
         return {class_name}({return_arguments})

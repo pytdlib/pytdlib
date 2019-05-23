@@ -12,12 +12,12 @@ class TDClient:
 
         if td_library is not None:
             if json_client is not None:
-                raise ValueError("One of tdjson or json_client argument is require")
+                raise ValueError("One of tdjson or json_client argument is required")
             self._json_client = TDJsonClient(td_library)
         elif json_client is not None:
             self._json_client = json_client
         else:
-            raise ValueError("At least one of tdjson or json_client argument is require")
+            raise ValueError("At least one of tdjson or json_client argument is required")
         self.client_id = None if client_id is not None else client_id
 
     @property
