@@ -30,9 +30,7 @@ class Object:
                     def sub_stringify(value, indent):
                         if isinstance(value, Object):
                             return stringify(value, indent + 1)
-                        elif isinstance(value, (str, int, bytes)):
-                            return repr(value)
-                        elif hasattr(value, '__iter__'):
+                        elif isinstance(value, list):
                             res = ['[\n']
                             indent += 1
                             for x in value:
@@ -48,8 +46,8 @@ class Object:
 
                     result.append(sub_stringify(value, indent))
                     result.append(',\n')
-                else:
-                    result[-1] = '\n'
+
+                result[-1] = '\n'
 
                 result.append('\t' * (indent - 1))
                 result.append(')')
