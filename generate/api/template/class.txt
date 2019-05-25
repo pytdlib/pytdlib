@@ -7,11 +7,10 @@ class {class_name}(Object):
     """
     {docstring}
     """
-    __slots__ = [{slots}{s_extra}]
+    __slots__ = [{slots}]
     ID = '{ID}'
 
-    def __init__(self{arguments}{extra}, **kwargs):
-        {has_extra}
+    def __init__(self, {arguments}**kwargs):
         {fields}
 
     @staticmethod
