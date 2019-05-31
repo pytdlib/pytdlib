@@ -1,8 +1,1 @@
-authorization_stats = [
-        'authorizationStateWaitTdlibParameters',
-        'authorizationStateWaitEncryptionKey',
-        'authorizationStateWaitPhoneNumber',
-        'authorizationStateWaitCode',
-        'authorizationStateWaitPassword',
-        'authorizationStateReady'
-]
+from .authorization_stats import authorization_stats
