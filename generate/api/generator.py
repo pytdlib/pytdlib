@@ -5,7 +5,7 @@ import shutil
 HOME = 'generate/api'
 DESTINATION = 'pytdlib/api'
 SECTION_RE = re.compile(r'---(\w+)---')
-COMBINATOR_RE = re.compile(r'^(\w+) (.*)? = (\w+);$')
+COMBINATOR_RE = re.compile(r'^(\w+) (.*)?= (\w+);$')
 ARGS_RE = re.compile('(\w+):([\w<>]+)')
 DOCS_RE = re.compile(r'//((-)|@)(description)?([\w -.,;]+)(@?)(.*)?')
 ClASS_DOCS_RE = re.compile(r"^//@class (\w+) @description (.*)")
@@ -109,7 +109,7 @@ def start():
         combinator = COMBINATOR_RE.match(line)
         if combinator:
             name, args_text, return_type = combinator.groups()
-            args = {arg.split(':')[0]: arg.split(':')[1] for arg in args_text.split(' ')}
+            args = {arg.split(':')[0]: arg.split(':')[1] for arg in args_text.rstrip().split(' ')} if args_text else {}
             method_combinators[name] = MethodCombinator(
                 upper_first(name),
                 method_description,
