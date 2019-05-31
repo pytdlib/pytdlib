@@ -251,7 +251,7 @@ def start():
 
             if c.section != 'types':
                 slots.append('\'extra\'')
-                arguments.append('extra')
+                arguments.append('extra=None')
                 fields.append("self.extra = extra")
 
             if arguments:
