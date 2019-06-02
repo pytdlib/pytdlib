@@ -68,5 +68,12 @@ class BaseTelegram:
 
         self._proxy = None
 
-    def send(self, data: object, callback: bool = None):
+    def send(self, data, callback=None, retries=None):
         pass
+
+    def execute(self, data):
+        pass
+
+    @property
+    def is_authorized(self):
+        return self._authorized

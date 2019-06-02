@@ -18,7 +18,7 @@ from .dispatcher import Dispatcher
 from configparser import ConfigParser
 from .methods import Methods
 
-__log__ = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class Telegram(Methods, BaseTelegram):
@@ -140,41 +140,41 @@ class Telegram(Methods, BaseTelegram):
         option = self._client.receive(1.0)
         option = Object.read(option)
         try:
-            assert option.value.value == self.LIB_TD_JSON_VERSION
-        except AssertionError:
-            raise ValueError('libtdjson >= 1.4.0 is required')
-        except AttributeError:
-            pass
-
-        for i in range(self.RECEIVE_WORKERS):
-            self._receive_worker_list.append(
-                Thread(
-                    target=self.receive_worker,
-                    name="ReceiveWorker#{}".format(i + 1)
+            for i in range(self.RECEIVE_WORKERS):
+                self._receive_worker_list.append(
+                    Thread(
+                        target=self.receive_worker,
+                        name="ReceiveWorker#{}".format(i + 1)
+                    )
                 )
-            )
 
-            self._receive_worker_list[-1].start()
+                self._receive_worker_list[-1].start()
 
-        for i in range(self.EVENTS_WORKERS):
-            self._events_workers_list.append(
-                Thread(
-                    target=self.events_worker,
-                    name="EventsWorker#{}".format(i + 1)
+            for i in range(self.EVENTS_WORKERS):
+                self._events_workers_list.append(
+                    Thread(
+                        target=self.events_worker,
+                        name="EventsWorker#{}".format(i + 1)
+                    )
                 )
-            )
 
-            self._events_workers_list[-1].start()
+                self._events_workers_list[-1].start()
 
-        for i in range(self.cb_workers):
-            self._callback_workers_list.append(
-                Thread(
-                    target=self.callback_worker,
-                    name="CallbackWorker#{}".format(i + 1)
+            for i in range(self.cb_workers):
+                self._callback_workers_list.append(
+                    Thread(
+                        target=self.callback_worker,
+                        name="CallbackWorker#{}".format(i + 1)
+                    )
                 )
-            )
 
-            self._callback_workers_list[-1].start()
+                self._callback_workers_list[-1].start()
+
+        except Exception as e:
+            self._is_connected = False
+            raise e
+
+        assert (self.options.version == self.LIB_TD_JSON_VERSION), 'libtdjson >= 1.4.0 is required'
 
         self.authorization(authorization_stats[1])
 
@@ -182,7 +182,8 @@ class Telegram(Methods, BaseTelegram):
 
     def start(self):
 
-        self.connect()
+        if not self._is_connected:
+            self.connect()
 
         if self._is_started:
             raise ConnectionError("Client has already been Started")
@@ -314,7 +315,7 @@ class Telegram(Methods, BaseTelegram):
 
         self._results[msg_id] = Result()
 
-        self._client.send(data)
+        self._client.send(bytes(data))
 
         self._results[msg_id].event.wait(self.WAIT_TIMEOUT)
         result = self._results.pop(msg_id).value
@@ -328,7 +329,7 @@ class Telegram(Methods, BaseTelegram):
 
     def send(self, data: Object, response: Callback=True, retries: int = MAX_RETRIES) -> "Callback or Object":
         if not response:
-            return self._client.send(data)
+            return self._client.send(bytes(data))
         else:
             msg_id = MsgId()
             data.extra = msg_id
@@ -343,6 +344,10 @@ class Telegram(Methods, BaseTelegram):
                     except (OSError, TimeoutError) as e:
                         if _ == retries:
                             raise e from None
+
+    def execute(self, data: Object):
+        res = self.client.execute(bytes(data))
+        return Object.read(res)
 
     def on(self, event: Update=None):
 
@@ -422,7 +427,10 @@ class Telegram(Methods, BaseTelegram):
                 raise ValueError('ProxyType {} Not Found'.format(proxy_type))
 
     def __enter__(self):
-        return self.start()
+        return self.connect()
 
     def __exit__(self, *args):
-        self.stop()
+        if self._is_started:
+            self.stop()
+        elif self._is_connected:
+            self.disconnect()
