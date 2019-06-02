@@ -1,0 +1,30 @@
+class Options:
+    def __init__(self,
+                 disable_contact_registered_notifications : bool=None,
+                 disable_top_chats: bool=None,
+                 ignore_background_updates: bool=None,
+                 ignore_inline_thumbnails: bool=None,
+                 language_pack_database_path: str=None,
+                 language_pack_id: str=None,
+                 localization_target: str=None,
+                 notification_group_count_max: int=None,
+                 notification_group_size_max: int=None,
+                 online: bool=None,
+                 prefer_ipv6: bool=None,
+                 use_pfs: bool=None,
+                 use_quick_ack: bool=None,
+                 use_storage_optimizer: bool=None):
+        self.disable_contact_registered_notifications = disable_contact_registered_notifications
+        self.disable_top_chats = disable_top_chats
+        self.ignore_background_updates = ignore_background_updates
+        self.ignore_inline_thumbnails = ignore_inline_thumbnails
+        self.language_pack_database_path = language_pack_database_path
+        self.language_pack_id = language_pack_id
+        self.localization_target = localization_target
+        self.notification_group_count_max = notification_group_count_max
+        self.notification_group_size_max = notification_group_size_max
+        self.online = online
+        self.prefer_ipv6 = prefer_ipv6
+        self.use_pfs = use_pfs
+        self.use_quick_ack = use_quick_ack
+        self.use_storage_optimizer = use_storage_optimizer
