@@ -1,6 +1,8 @@
 import os
 import re
 import shutil
+from collections import OrderedDict
+
 
 HOME = 'generate/api'
 DESTINATION = 'pytdlib/api'
@@ -99,7 +101,9 @@ def start():
                     descriptions[-1] += '. %s' % desc
                 else:
                     method_description += '. %s' % desc
-
+            else:
+                descriptions.append(desc)
+                
             # split data by @ and save in descriptions list
 
             if has_extra:
@@ -109,7 +113,7 @@ def start():
         combinator = COMBINATOR_RE.match(line)
         if combinator:
             name, args_text, return_type = combinator.groups()
-            args = {arg.split(':')[0]: arg.split(':')[1] for arg in args_text.rstrip().split(' ')} if args_text else {}
+            args = OrderedDict([(arg.split(':')[0], arg.split(':')[1]) for arg in args_text.rstrip().split(' ')] if args_text else [])
             method_combinators[name] = MethodCombinator(
                 upper_first(name),
                 method_description,
@@ -251,7 +255,7 @@ def start():
 
             if c.section != 'types':
                 slots.append('\'extra\'')
-                arguments.append('extra')
+                arguments.append('extra=None')
                 fields.append("self.extra = extra")
 
             if arguments:
