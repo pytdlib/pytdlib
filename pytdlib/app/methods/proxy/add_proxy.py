@@ -1,5 +1,6 @@
 from pytdlib.app.utils import BaseTelegram
 from pytdlib.app.types.proxy import ProxyType, Socks5Proxy, HttpProxy, MTprotoProxy
+from pytdlib.app.utils.proxy_parser import proxy_parser
 from pytdlib.api import functions
 from pytdlib.api import types
 
@@ -12,7 +13,7 @@ class AddProxy(BaseTelegram):
             HttpProxy: lambda p: types.ProxyTypeHttp(p.username, p.password, p.http_only),
             MTprotoProxy: lambda p: types.ProxyTypeMtproto(p.secret)
         }
-        return self.send(
+        res = self.send(
             functions.AddProxy(
                 server=proxy.hostname,
                 port=proxy.port,
@@ -20,3 +21,4 @@ class AddProxy(BaseTelegram):
                 type=proxies[type(proxy)](proxy)
             )
         )
+        return proxy_parser(res)

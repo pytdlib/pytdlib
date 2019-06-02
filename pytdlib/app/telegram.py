@@ -401,7 +401,7 @@ class Telegram(Methods, BaseTelegram):
         if not self.work_dir or self.work_dir == self.WORK_DIR:
             self.work_dir = os.path.join(os.getcwd(), self.profile)
 
-        if not self._proxy and parser.has_section("proxy"):
+        if self._proxy is None and parser.has_section("proxy"):
             proxies = {
                 "http": (HttpProxy, {"username", "password", "http_only"}),
                 "socks": (Socks5Proxy, {"username", "password"}),

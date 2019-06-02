@@ -9,6 +9,7 @@ class HttpProxy(Socks5Proxy):
                  enabled: bool=True,
                  username: str=None,
                  password: str=None,
-                 http_only: bool=False):
-        super(HttpProxy, self).__init__(hostname, port, enabled, username, password)
+                 http_only: bool=False,
+                 **kwargs):
+        super(HttpProxy, self).__init__(hostname, port, enabled, username, password, **kwargs)
         self.http_only = http_only

@@ -8,7 +8,8 @@ class Socks5Proxy(ProxyType):
                  port: int,
                  enabled: bool = True,
                  username: str=None,
-                 password: str=None):
-        super(Socks5Proxy, self).__init__(hostname, port, enabled)
+                 password: str=None,
+                 **kwargs):
+        super(Socks5Proxy, self).__init__(hostname, port, enabled, **kwargs)
         self.username = username
         self.password = password
