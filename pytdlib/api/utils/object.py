@@ -52,6 +52,17 @@ class Object:
                 result.append('\t' * (indent - 1))
                 result.append(')')
                 return ''.join(result)
+            elif isinstance(obj, list):
+                res = ['[\n']
+                indent += 1
+                for x in obj:
+                    res.append('\t' * indent)
+                    res.append(stringify(x, indent + 1))
+                    res.append(',\n')
+                indent -= 1
+                res.append('\t' * indent)
+                res.append(']')
+                return ''.join(res)
             else:
                 return repr(obj)
 
