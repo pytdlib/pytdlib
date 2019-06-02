@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 from queue import Queue
-from threading import Thread
+import threading
 
 from ..events import Update
 
@@ -22,7 +22,7 @@ class Dispatcher:
     def start(self):
         for i in range(self._workers):
             self._workers_list.append(
-                Thread(
+                threading.Thread(
                     target=self.event_worker,
                     name="EventWorker#{}".format(i + 1)
                 )
@@ -65,7 +65,8 @@ class Dispatcher:
                 del self.event_parsers[event_name]
 
     def event_worker(self):
-
+        name = threading.current_thread().name
+        log.debug("%s started" % name)
         while True:
             event = self.events_queue.get()
 
@@ -85,10 +86,14 @@ class Dispatcher:
                 for event_group in self.events.get(event_id, {}).values():
                     for event_handler in event_group:
                         if event_handler.check(parsed_event):
+
                             try:
                                 event_handler.callback(self._client, parsed_event)
-                            except:
-                                pass
+                            except Exception as e:
+                                log.error(e, exc_info=True)
+
                             break
-            except:
-                pass
+            except Exception as e:
+                log.error(e, exc_info=True)
+
+        log.debug("%s stopped" % name)
