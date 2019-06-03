@@ -54,10 +54,14 @@ class TDClient:
 
     def destroy(self):
         log.info('TDClient(%s) Destroyed' % self.client_id)
-        return self._json_client.destroy(self.client_id)
+        self._json_client.destroy(self.client_id)
+        self.closed()
+
+    def closed(self):
+        self.client_id = None
 
     def __str__(self):
-        return 'TDClient(%s)' % self.client_id
+        return '<TDClient(%s)>' % self.client_id
 
     def __del__(self):
         if self.client_id is not None:

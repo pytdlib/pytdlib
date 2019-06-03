@@ -1,5 +1,5 @@
 import logging
-from .authorization_stats import authorization_stats
+from .authorization_stats import AuthorizationStats
 
 log = logging.getLogger(__name__)
 

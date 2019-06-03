@@ -6,7 +6,7 @@ from signal import signal, SIGINT, SIGTERM, SIGABRT
 from threading import Thread
 from .types import HttpProxy, Socks5Proxy, MTprotoProxy, Options
 from .types.log import LogStream
-from pytdlib.utils import authorization_stats
+from pytdlib.utils import AuthorizationStats
 from pytdlib import Error
 from pytdlib.td import TDClient
 from pytdlib.api import Object
@@ -169,7 +169,7 @@ class Telegram(Methods, BaseTelegram):
 
         assert (self.options.version == self.LIB_TD_JSON_VERSION), 'libtdjson >= 1.4.0 is required'
 
-        self.authorization(authorization_stats[1])
+        self.authorization(AuthorizationStats(2))
 
         for name, value in options_dict.items():
             if name not in TlOptions.NOT_WRITEABLE and value is not None:
@@ -192,7 +192,7 @@ class Telegram(Methods, BaseTelegram):
 
         try:
 
-            self.authorization(authorization_stats[-1])
+            self.authorization(AuthorizationStats(6))
 
             self.dispatcher.start()
 

@@ -4,7 +4,7 @@ from getpass import getpass
 from pytdlib.app.utils import BaseTelegram
 from pytdlib.api import functions
 from pytdlib.api import types
-from pytdlib.utils import authorization_stats
+from pytdlib.utils import AuthorizationStats
 from .check_bot_token import CheckBotToken
 from .check_darabase_key import CheckDatabaseKey
 from .set_database_key import SetDatabaseKey
@@ -12,6 +12,7 @@ from .send_code_request import SendCodeRequest
 from .set_tdlib_parameters import SetTdlibParameters
 from .sign_in import SignIn
 from .sign_up import SignUp
+from .close import Close
 
 
 class Auth(CheckBotToken,
@@ -21,9 +22,9 @@ class Auth(CheckBotToken,
            SetTdlibParameters,
            SignIn,
            SignUp,
-           BaseTelegram):
+           Close):
 
-    def authorization(self, final_state: str = authorization_stats[-1]):
+    def authorization(self, final_state: AuthorizationStats = AuthorizationStats(6)):
 
         def set_tdlib_params(_data: types.AuthorizationStateWaitTdlibParameters):
             return self.set_tdlib_parameters(
@@ -104,16 +105,20 @@ class Auth(CheckBotToken,
             pswrd = getpass(prompt=text)
             return self.sign_in(password=pswrd)
 
-        stats = {
-            'authorizationStateWaitTdlibParameters': set_tdlib_params,
-            'authorizationStateWaitEncryptionKey': check_encryption_key,
-            'authorizationStateWaitPhoneNumber': authorize,
-            'authorizationStateWaitCode': authorize_user,
-            'authorizationStateWaitPassword': check_password,
-            'authorizationStateReady': lambda u: setattr(self, "_authorized", True)
-        }
+        stats = [
+            set_tdlib_params,
+            check_encryption_key,
+            authorize,
+            authorize_user,
+            check_password,
+            lambda u: setattr(self, "_authorized", True)
+        ]
         while self._is_connected:
             last_state = self.send(functions.GetAuthorizationState())
-            stats[last_state.ID](last_state)
-            if last_state.ID == final_state:
+            last_state_number = AuthorizationStats.get_step(last_state)
+            try:
+                stats[last_state_number](last_state)
+            except IndexError:
+                return
+            if last_state_number >= final_state:
                 break
