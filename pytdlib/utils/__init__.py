@@ -10,7 +10,15 @@ except ImportError:
     import json
 
 
-def object_to_bytes(query):
+def object_to_bytes(query: bytes or dict or str) -> bytes:
+    """convert object to bytes
+
+    Parameters:
+        query (``bytes`` | ``dict`` | ``str``)
+
+    Returns:
+        ``bytes`` : converted query to bytes
+    """
     if isinstance(query, bytes):
         return query
     elif isinstance(query, dict):

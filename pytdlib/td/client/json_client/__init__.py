@@ -3,7 +3,12 @@ from .json_client import Receive, Send, Execute, Destroy, Create
 
 
 class TDJsonClient(Create, Receive, Send, Execute, Destroy):
-    """This class represents initialized Python wrapper for library client functions."""
+    """This class represents initialized Python wrapper for library client functions.
+
+    Parameters:
+        td_json_library (:obj:`CDLL`)
+            TDLib library
+    """
     def __init__(self, td_json_library: CDLL):
         self._tdjson = td_json_library
         self._init()

@@ -3,7 +3,12 @@ from .log import SetLogPath, SetLogSize, SetLogLevel, SetLogErrorCallback
 
 
 class TDLog(SetLogPath, SetLogSize, SetLogLevel, SetLogErrorCallback):
-    """This class represents initialized Python wrapper for library log functions."""
+    """This class represents initialized Python wrapper for library log functions.
+
+    Parameters:
+        td_json_library (:obj:`CDLL`)
+            TDLib library
+    """
     def __init__(self, td_json_library: CDLL):
         self._tdjson = td_json_library
         self._init()
