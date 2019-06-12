@@ -150,7 +150,7 @@ def start():
             f.write("from .{} import {}\n".format(snek(c.name), c.name))
 
         imports = []
-        doc_args = [c.description, '\n\n    Attributes:\n        ID (:obj:`str`): ``', c.name, '``\n\n    Args']
+        doc_args = [c.description, '\n\n    Attributes:\n        ID (``str``): ``', c.name, '``\n\n    Parameters:']
         slots = []
         arguments = []
         fields = []
@@ -158,7 +158,7 @@ def start():
         if isinstance(c, ClassCombinator):
             doc_args.append('\n        No parameters required.\n\n')
             return_read = [upper_first(r_name) for r_name in c.sub_classes]
-            read_args = ['if q.get("@type"):', '    return Object.read(q)']
+            read_args = ['if d.get("@type"):', '    return Object.read(d)']
 
         else:
 
@@ -168,8 +168,8 @@ def start():
 
                 if arg_type in core_types:
                     field_type = core_types[arg_type]
-                    arg_type = "(:obj:`{}`)".format(core_types[arg_type])
-                    arg_read = "q.get('{}')".format(arg_name)
+                    arg_type = "(``{}``)".format(core_types[arg_type])
+                    arg_read = "d.get('{}')".format(arg_name)
 
                 elif arg_type.startswith("vector"):
                     sub_type = arg_type.split("<", 1)[1][:-1]
@@ -177,14 +177,14 @@ def start():
                     if sub_type.startswith("vector"):
                         sub_type = sub_type.split("<", 1)[1][:-1]
                         if sub_type in core_types:
-                            arg_type = "(List of List of :obj:`{}`)".format(core_types[sub_type])
+                            arg_type = "(List of List of ``{}``)".format(core_types[sub_type])
                             field_type = "list of List of {}".format(core_types[sub_type])
-                            arg_read = "q.get('{}')".format(arg_name)
+                            arg_read = "d.get('{}')".format(arg_name)
 
                         else:
                             arg_type = "(List of List of :class:`pytdlib.api.types.{}`)".format(sub_type)
                             field_type = "list of list({})".format(sub_type)
-                            arg_read = "[[{}.read(v) for v in i] for i in q.get('{}', [])]".format(
+                            arg_read = "[[{}.read(v) for v in i] for i in d.get('{}', [])]".format(
                                 # upper_first(sub_type),
                                 "Object",
                                 arg_name
@@ -192,14 +192,14 @@ def start():
                             # imports += "from .{} import {}\n".format(snek(sub_type), upper_first(sub_type))
                     else:
                         if sub_type in core_types:
-                            arg_type = "(List of :obj:`{}`)".format(core_types[sub_type])
+                            arg_type = "(List of ``{}``)".format(core_types[sub_type])
                             field_type = "list of {}".format(core_types[sub_type])
-                            arg_read = "q.get('{}')".format(arg_name)
+                            arg_read = "d.get('{}')".format(arg_name)
 
                         else:
                             arg_type = "(List of :class:`pytdlib.api.types.{}`)".format(sub_type)
                             field_type = "list of {}".format(sub_type)
-                            arg_read = "[{}.read(i) for i in q.get('{}', [])]".format(
+                            arg_read = "[{}.read(i) for i in d.get('{}', [])]".format(
                                 # upperfirst(sub_type),
                                 "Object",
                                 arg_name
@@ -208,7 +208,7 @@ def start():
 
                 else:
                     field_type = upper_first(arg_type)
-                    arg_read = "{}.read(q.get('{}'))".format(
+                    arg_read = "{}.read(d.get('{}'))".format(
                         # field_type,
                         "Object",
                         arg_name
@@ -244,16 +244,15 @@ def start():
             else:
                 doc_args.append('\n        No parameters required.\n\n')
 
-            doc_args.append('\n\n    Returns:\n        ')
-            doc_args.append(c.return_type)
-            doc_args.append('\n\n    Raises:\n        ')
-            doc_args.append(':class:`pytdlib.Error`')
-
             slots.extend(repr(i) for i in c.args.keys())
 
             return_read = [c.name]
 
             if c.section != 'types':
+                doc_args.append('\n\n    Returns:\n        ')
+                doc_args.append(c.return_type)
+                doc_args.append('\n\n    Raises:\n        ')
+                doc_args.append(':class:`pytdlib.TLError`')
                 slots.append('\'extra\'')
                 arguments.append('extra=None')
                 fields.append("self.extra = extra")
