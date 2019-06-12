@@ -8,10 +8,13 @@ class Object:
     ID = 'object'
 
     @staticmethod
-    def read(q: dict, *args):
-        if q is None:
+    def read(data: dict, *args):
+        if data is None:
             return None
-        return Object.all[q["@type"]].read(q, *args)
+        return Object.all[data["@type"]].read(data, *args)
+
+    def to_bytes(self):
+        return self.__bytes__()
 
     def __str__(self, indent: int = 1) -> str:
         def stringify(obj, indent):
@@ -82,8 +85,21 @@ class Object:
 
         return dumps(self, default=default).encode('utf-8')
 
+    def __eq__(self, other: "Object") -> bool:
+        for attr in self.__slots__:
+            try:
+                if getattr(self, attr) != getattr(other, attr):
+                    return False
+            except AttributeError:
+                return False
+
+        return True
+
     def __len__(self) -> int:
         return len(self.__bytes__())
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
