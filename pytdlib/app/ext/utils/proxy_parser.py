@@ -1,5 +1,5 @@
 from pytdlib.api import types
-from pytdlib.app.types.proxy import Socks5Proxy, HttpProxy, MTprotoProxy
+from ...types import Socks5Proxy, HttpProxy, MTprotoProxy
 
 
 def proxy_parser(proxy):

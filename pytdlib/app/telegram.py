@@ -1,22 +1,19 @@
 import time
 import logging
-import inspect
-
-from signal import signal, SIGINT, SIGTERM, SIGABRT
-from threading import Thread
-from .types import HttpProxy, Socks5Proxy, MTprotoProxy, Options
-from .types.log import LogStream
-from pytdlib.utils import AuthorizationStats
-from pytdlib import Error
-from pytdlib.td import TDClient
-from pytdlib.api import Object
 from ctypes import CDLL
-from .types import ProxyType
-import os
-from .utils import BaseTelegram, Result, MsgId, Callback, TlOptions
-from .events import Update
-from .dispatcher import Dispatcher
+import threading
 from configparser import ConfigParser
+from signal import signal, SIGINT, SIGTERM, SIGABRT
+
+from pytdlib.utils import AuthorizationStats
+from pytdlib.api import Object
+from pytdlib.api.errors import TLError
+from pytdlib.td.client import TDClient
+from pytdlib.app.events import Update
+
+from .types import ProxyType, HttpProxy, Socks5Proxy, MTprotoProxy
+from .ext import BaseTelegram, TdlibParameters, Dispatcher, Result, MsgId, Callback, LogStream
+from .options import TLOptions, Options
 from .methods import Methods
 
 log = logging.getLogger(__name__)
@@ -28,24 +25,12 @@ class Telegram(Methods, BaseTelegram):
     RECEIVE_WORKERS = 1
     MAX_RETRIES = 5
     WAIT_TIMEOUT = 10
+    PROFILE = 'tdlib_account'
 
     def __init__(self,
                  tdjson: str or CDLL=None,
-                 profile: str = "example",
-                 api_id: int = None,
-                 api_hash: str = None,
-                 app_version: str = None,
-                 device_model: str = None,
-                 system_version: str = None,
-                 lang_code: str = None,
-                 test_mode: bool = None,
-                 use_file_db: bool = None,
-                 storage_optimizer: bool = None,
-                 file_readable_names: bool = None,
-                 use_chat_db: bool = None,
-                 use_message_db: bool = None,
-                 allow_secret_chat: bool = None,
-                 work_dir: str = "",
+                 profile: str = PROFILE,
+                 tdlib_parameters: TdlibParameters or dict=None,
                  log_stream: LogStream.Default or LogStream.File or LogStream.Empty = None,
                  log_verbosity: int = 0,
                  bot_token: str = None,
@@ -55,41 +40,28 @@ class Telegram(Methods, BaseTelegram):
                  force_sms: bool = False,
                  first_name: str = None,
                  last_name: str = None,
-                 encryption_key: str = "Naji2nam",
+                 encryption_key: str = 'Naji2nam',
                  workers: int = 4,
                  cb_workers: int=4,
-                 config_file: str = "./config.ini",
+                 config_file: str = './config.ini',
                  proxy: ProxyType = None,
-                 options: Options = None,
+                 options: Options or dict = None,
                  client: TDClient=None,):
         super(Telegram, self).__init__()
 
-        if tdjson:
+        if tdjson is not None:
             self._tdjosn = tdjson if isinstance(tdjson, CDLL) else CDLL(tdjson)
         elif client is not None:
             self._tdjosn = client._tdjson
         else:
-            raise ValueError("should have at most one argument of both bot_token or phone_number")
+            raise ValueError('should have at most one argument of both bot_token or phone_number')
 
         self._client = TDClient(self._tdjosn) if client is None else client
 
         self.profile = profile
 
-        self.api_id = api_id
-        self.api_hash = api_hash
-        self.app_version = app_version
-        self.device_model = device_model
-        self.system_version = system_version
-        self.lang_code = lang_code
-        self.test_mode = test_mode
-        self.use_file_db = use_file_db
-        self.storage_optimizer = storage_optimizer
-        self.file_readable_names = file_readable_names
-        self.use_chat_db = use_chat_db
-        self.use_message_db = use_message_db
-        self.allow_secret_chat = allow_secret_chat
-
-        self.work_dir = work_dir
+        if tdlib_parameters is not None:
+            self.tdlib_parameters = tdlib_parameters
 
         self.log_stream = log_stream
         self.log_verbosity = log_verbosity
@@ -103,7 +75,7 @@ class Telegram(Methods, BaseTelegram):
         self.last_name = last_name
 
         if self.bot_token and self.phone_number:
-            raise ValueError("both bot_token and phone_number can not be used")
+            raise ValueError('both bot_token and phone_number can not be used')
 
         self.encryption_key = encryption_key
 
@@ -115,17 +87,21 @@ class Telegram(Methods, BaseTelegram):
 
         self.dispatcher = Dispatcher(self, workers)
 
-        self.options_dict = {name: value for name, value in vars(options).items() if value is not None} if options is not None else {}
-        self.options = TlOptions(self.set_option, self.get_option)
+        self.options_dict = {name: value for name, value in vars(options).items()
+                             if value is not None} if options is not None else {}
+
+        self.options = TLOptions(self.set_option, self.get_option)
 
     @property
-    def client(self)-> "TDClient":
+    def client(self)-> 'TDClient':
         return self._client
 
     def connect(self):
 
         if self._is_connected:
-            raise ConnectionError("Client has already been Connected")
+            raise ConnectionError('Client has already been Connected')
+
+        log.info('Connecting ...')
 
         self.load_config()
 
@@ -135,9 +111,9 @@ class Telegram(Methods, BaseTelegram):
         try:
             for i in range(self.RECEIVE_WORKERS):
                 self._receive_worker_list.append(
-                    Thread(
+                    threading.Thread(
                         target=self.receive_worker,
-                        name="ReceiveWorker#{}".format(i + 1)
+                        name='ReceiveWorker#{}'.format(i + 1)
                     )
                 )
 
@@ -145,9 +121,9 @@ class Telegram(Methods, BaseTelegram):
 
             for i in range(self.EVENTS_WORKERS):
                 self._events_workers_list.append(
-                    Thread(
+                    threading.Thread(
                         target=self.events_worker,
-                        name="EventsWorker#{}".format(i + 1)
+                        name='EventsWorker#{}'.format(i + 1)
                     )
                 )
 
@@ -155,9 +131,9 @@ class Telegram(Methods, BaseTelegram):
 
             for i in range(self.cb_workers):
                 self._callback_workers_list.append(
-                    Thread(
+                    threading.Thread(
                         target=self.callback_worker,
-                        name="CallbackWorker#{}".format(i + 1)
+                        name='CallbackWorker#{}'.format(i + 1)
                     )
                 )
 
@@ -169,15 +145,22 @@ class Telegram(Methods, BaseTelegram):
 
         assert (self.options.version == self.LIB_TD_JSON_VERSION), 'libtdjson >= 1.4.0 is required'
 
+        log.info('Starting Pre-Authentication.')
         self.authorization(AuthorizationStats(2))
+        log.info('Pre-Authentication Done.')
 
         for name, value in options_dict.items():
-            if name not in TlOptions.NOT_WRITEABLE and value is not None:
-                setattr(self.options, name, value)
+            if name not in TLOptions.NOT_WRITEABLE and value is not None:
+                try:
+                    setattr(self.options, name, value)
+                except TLError:
+                    pass
 
         if self._proxy is not None:
+            log.info('Set Proxy')
             self.proxy = self._proxy
 
+        log.info('... Connected.')
         return self
 
     def start(self):
@@ -186,24 +169,30 @@ class Telegram(Methods, BaseTelegram):
             self.connect()
 
         if self._is_started:
-            raise ConnectionError("Client has already been Started")
+            raise ConnectionError('Client has already been Started')
+
+        log.info('Starting ...')
 
         self._is_started = True
 
         try:
-
+            log.info('Starting Main-Authorization.')
             self.authorization(AuthorizationStats(6))
+            log.info('Main-Authorization Done.')
 
             self.dispatcher.start()
-
-            return self
 
         except Exception as e:
             self._is_started = False
             raise e
 
+        log.info('... Started')
+        return self
+
     def restart(self):
+        log.info('Restarting App')
         self.stop()
+        self._client.create(use=True)
         self.start()
 
     def idle(self, func: callable=None, stop_signals: tuple = (SIGINT, SIGTERM, SIGABRT)):
@@ -223,7 +212,7 @@ class Telegram(Methods, BaseTelegram):
         else:
             func()
 
-        self.stop()
+        self.close()
 
     def run(self, func: callable=None):
         self.start()
@@ -231,15 +220,15 @@ class Telegram(Methods, BaseTelegram):
 
     def disconnect(self):
         if not self._is_connected:
-            raise ConnectionError("Client is already disconnected")
-
+            raise ConnectionError('Client is already disconnected')
+        log.info('Disconnecting ...')
         self._is_connected = False
 
         for _ in range(self.EVENTS_WORKERS):
             self._recv_queue.put(None)
 
-        for i in self._events_workers_list:
-            i.join()
+        # for i in self._events_workers_list:
+        #    i.join()
 
         self._events_workers_list.clear()
 
@@ -251,37 +240,51 @@ class Telegram(Methods, BaseTelegram):
 
         self._callback_workers_list.clear()
 
-        self._client.destroy()
+        self._client.closed()
 
+        log.info('... Disconnected')
         return self
 
     def stop(self):
 
         if not self._is_started:
-            raise ConnectionError("Client is already stopped")
+            raise ConnectionError('Client is already stopped')
 
+        log.info('Stopping ...')
         self._is_started = False
 
         self.dispatcher.stop()
 
         self.disconnect()
 
+        log.info('... Stopped.')
         return self
 
     def receive_worker(self):
-
+        name = threading.current_thread().name
+        log.debug('%s Started' % name)
         while self._is_connected:
             event = self._client.receive(1.0)
 
             if event is not None:
                 self._recv_queue.put(event)
 
+        log.info('%s Stopped' % name)
+
     def process_event(self, event: dict):
-        msg_id = event["@extra"] if "@extra" in event else None
+        msg_id = event['@extra'] if '@extra' in event else None
 
         event = Object.read(event)
 
-        if event.ID == 'updateOption':
+        if event.ID == 'updateAuthorizationState':
+            if event.authorization_state.ID == 'authorizationStateLoggingOut':
+                self.restart()
+            elif event.authorization_state.ID == 'authorizationStateClosing':
+                self._is_ready = False
+            elif event.authorization_state.ID == 'authorizationStateClosed':
+                if self._is_started:
+                    self.stop()
+        elif event.ID == 'updateOption' and event.value.ID != 'optionValueEmpty':
             self.options_dict[event.name] = event.value.value
 
         if msg_id in self._results:
@@ -300,6 +303,8 @@ class Telegram(Methods, BaseTelegram):
                 self.dispatcher.events_queue.put(event)
 
     def events_worker(self):
+        name = threading.current_thread().name
+        log.debug('%s Started' % name)
         while True:
             event = self._recv_queue.get()
             if event is None:
@@ -307,41 +312,48 @@ class Telegram(Methods, BaseTelegram):
 
             self.process_event(event)
 
+        log.info('%s Stopped' % name)
+
     def callback_worker(self):
+        name = threading.current_thread().name
+        log.debug('%s Started' % name)
         while True:
             callback = self._callback_queue.get()
             if callback is None:
                 break
             try:
                 callback.run()
-            except:
-                pass
+            except Exception as e:
+                log.error(e, exc_info=True)
+
+        log.info('%s Stopped' % name)
 
     def _send(self, data: Object, msg_id: int):
 
         self._results[msg_id] = Result()
 
-        self._client.send(bytes(data))
+        self._client.send(data.to_bytes())
 
         self._results[msg_id].event.wait(self.WAIT_TIMEOUT)
         result = self._results.pop(msg_id).value
 
         if result is None:
             raise TimeoutError
-        elif isinstance(result, Object.all["error"]):
-            raise Error(result.code, result.message)
+        elif isinstance(result, Object.all['error']):
+            raise TLError(result.code, result.message)
         else:
             return result
 
-    def send(self, data: Object, response: Callback=True, retries: int = MAX_RETRIES) -> "Callback or Object":
+    def send(self, data: Object, response: Callback=True, retries: int = MAX_RETRIES) -> 'Callback or Object':
+
         if not response:
-            return self._client.send(bytes(data))
+            return self._client.send(data.to_bytes())
         else:
             msg_id = MsgId()
             data.extra = msg_id
             if isinstance(response, Callback):
                 self._cresults[msg_id] = response
-                self._client.send(bytes(data))
+                self._client.send(data.to_bytes())
                 return self._cresults[msg_id]
             else:
                 for _ in range(1, retries + 1):
@@ -352,7 +364,7 @@ class Telegram(Methods, BaseTelegram):
                             raise e from None
 
     def execute(self, data: Object):
-        res = self.client.execute(bytes(data))
+        res = self.client.execute(data.to_bytes())
         return Object.read(res)
 
     def on(self, event: Update=None):
@@ -381,7 +393,7 @@ class Telegram(Methods, BaseTelegram):
     def add_event_handler(self, event: Update):
 
         if event.callback is None:
-            raise AttributeError("No Callback Function Found")
+            raise AttributeError('No Callback Function Found')
 
         self.dispatcher.add_event(event)
 
@@ -391,42 +403,25 @@ class Telegram(Methods, BaseTelegram):
     def load_config(self):
         parser = ConfigParser()
         parser.read(self.config_file)
-        has_section = parser.has_section("tdlib")
-
-        attributes = [a[0] for a in inspect.getmembers(BaseTelegram, lambda a: not (inspect.isroutine(a)))
-                      if not a[0].startswith('_')] + ["API_ID", "API_HASH"]
-        for attribute in attributes:
-            option = attribute.lower()
-            value = getattr(self, option, None)
-            if value is None:
-                if has_section:
-                    value = parser.get(self._section_name, option, fallback=None)
-                setattr(self, option, value if value is not None else getattr(Telegram, attribute, None))
-
-        if not (self.api_id and self.api_hash):
-            raise AttributeError(
-                "No API Key found. "
-                "More info: https://docs.pyrogram.ml/start/ProjectSetup#configuration"
-            )
-
-        if not self.work_dir or self.work_dir == self.WORK_DIR:
-            self.work_dir = os.path.join(os.getcwd(), self.profile)
-
-        if self._proxy is None and parser.has_section("proxy"):
+        log.info('Loading Config File.')
+        TdlibParameters.load_from_config(self.tdlib_parameters, self.config_file, self.profile)
+        proxy_section_name = self._proxy_section_name
+        if self._proxy is None and parser.has_section(proxy_section_name):
+            log.info('Proxy Section in Config File.')
             proxies = {
-                "http": (HttpProxy, {"username", "password", "http_only"}),
-                "socks": (Socks5Proxy, {"username", "password"}),
-                "mtproto": (MTprotoProxy, ["secret"])
+                'http': (HttpProxy, {'username', 'password', 'http_only'}),
+                'socks': (Socks5Proxy, {'username', 'password'}),
+                'mtproto': (MTprotoProxy, ['secret'])
             }
-            proxy_type = parser.get("proxy", "type", fallback=None)
+            proxy_type = parser.get('proxy', 'type', fallback=None)
             proxy, ext_args = proxies.get(proxy_type, (None, None))
             if proxy:
-                enabled = parser.getboolean("proxy", "enabled", fallback=True)
-                hostname = parser.get("proxy", "hostname")
-                port = parser.getint("proxy", "port")
-                args = {"hostname": hostname, "port": port, "enabled": enabled}
+                enabled = parser.getboolean(proxy_section_name, 'enabled', fallback=True)
+                hostname = parser.get(proxy_section_name, 'hostname')
+                port = parser.getint(proxy_section_name, 'port')
+                args = {'hostname': hostname, 'port': port, 'enabled': enabled}
                 for ext_arg in ext_args:
-                    args[ext_arg] = parser.get("proxy", ext_arg, fallback=None) or None
+                    args[ext_arg] = parser.get('proxy', ext_arg, fallback=None) or None
 
                 self._proxy = proxy(**args)
             else:
@@ -436,7 +431,5 @@ class Telegram(Methods, BaseTelegram):
         return self.connect()
 
     def __exit__(self, *args):
-        if self._is_started:
-            self.stop()
-        elif self._is_connected:
-            self.disconnect()
+        if self._is_ready:
+            self.close()

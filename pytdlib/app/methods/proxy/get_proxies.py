@@ -1,6 +1,5 @@
-from pytdlib.app.utils import BaseTelegram
-from pytdlib.app.utils.proxy_parser import proxy_parser
 from pytdlib.api import functions
+from ...ext import BaseTelegram, proxy_parser
 
 
 class GetProxies(BaseTelegram):

@@ -1,7 +1,7 @@
-from pytdlib.app.utils import BaseTelegram
-from pytdlib.api import functions
-from pytdlib.api import types
-from pytdlib import Error
+from pytdlib.api import functions, types
+from pytdlib.api.errors import TLError
+from ...ext import BaseTelegram
+
 
 class GetOption(BaseTelegram):
 
@@ -19,5 +19,5 @@ class GetOption(BaseTelegram):
                     value = option_value.value
                 self.options_dict[name] = value
                 return value
-            except Error:
+            except TLError:
                 return None

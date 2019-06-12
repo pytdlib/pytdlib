@@ -7,7 +7,7 @@ class LogStream:
     class Empty(types.LogStreamEmpty): pass
 
     class File(types.LogStreamFile):
-        def __init__(self, path: str, max_file_size: int=1000):
+        def __init__(self, path: str='TDLib.log', max_file_size: int=1000):
             self.path = path
             self.max_file_size = max_file_size
 

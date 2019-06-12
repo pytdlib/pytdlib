@@ -1,10 +1,11 @@
 import os
 import re
+import logging
 from getpass import getpass
-from pytdlib.app.utils import BaseTelegram
-from pytdlib.api import functions
-from pytdlib.api import types
+
 from pytdlib.utils import AuthorizationStats
+from pytdlib.api import functions, types
+
 from .check_bot_token import CheckBotToken
 from .check_darabase_key import CheckDatabaseKey
 from .set_database_key import SetDatabaseKey
@@ -13,6 +14,8 @@ from .set_tdlib_parameters import SetTdlibParameters
 from .sign_in import SignIn
 from .sign_up import SignUp
 from .close import Close
+
+log = logging.getLogger(__name__)
 
 
 class Auth(CheckBotToken,
@@ -27,22 +30,25 @@ class Auth(CheckBotToken,
     def authorization(self, final_state: AuthorizationStats = AuthorizationStats(6)):
 
         def set_tdlib_params(_data: types.AuthorizationStateWaitTdlibParameters):
+            dd = self.tdlib_parameters['database_directory'] or os.path.join(self.tdlib_parameters['work_dir'], 'database')
+            fd = self.tdlib_parameters['files_directory'] or os.path.join(self.tdlib_parameters['work_dir'], 'files')
+
             return self.set_tdlib_parameters(
-                use_test_dc=self.test_mode,
-                database_directory=os.path.join(self.work_dir, "database"),
-                files_directory=os.path.join(self.work_dir, "files"),
-                use_file_database=self.use_file_db,
-                use_chat_info_database=self.use_chat_db,
-                use_message_database=self.use_message_db,
-                use_secret_chats=self.allow_secret_chat,
-                api_id=self.api_id,
-                api_hash=self.api_hash,
-                system_language_code=self.lang_code,
-                device_model=self.device_model,
-                system_version=self.system_version,
-                application_version=self.app_version,
-                enable_storage_optimizer=self.storage_optimizer,
-                ignore_file_names=self.file_readable_names
+                use_test_dc=self.tdlib_parameters['test_mode'],
+                database_directory=dd,
+                files_directory=fd,
+                use_file_database=self.tdlib_parameters['use_file_db'],
+                use_chat_info_database=self.tdlib_parameters['use_chat_db'],
+                use_message_database=self.tdlib_parameters['use_message_db'],
+                use_secret_chats=self.tdlib_parameters['allow_secret_chat'],
+                api_id=self.tdlib_parameters['api_id'],
+                api_hash=self.tdlib_parameters['api_hash'],
+                system_language_code=self.tdlib_parameters['lang_code'],
+                device_model=self.tdlib_parameters['device_model'],
+                system_version=self.tdlib_parameters['system_version'],
+                application_version=self.tdlib_parameters['app_version'],
+                enable_storage_optimizer=self.tdlib_parameters['storage_optimizer'],
+                ignore_file_names=(not self.tdlib_parameters['file_readable_names'])
             )
 
         def check_encryption_key(data: types.AuthorizationStateWaitEncryptionKey):
@@ -102,8 +108,8 @@ class Auth(CheckBotToken,
             if data.password_hint:
                 text += "Password Hint: {}\n".format(data.password_hint)
             text += "Enter password: "
-            pswrd = getpass(prompt=text)
-            return self.sign_in(password=pswrd)
+            password = getpass(prompt=text)
+            return self.sign_in(password=password)
 
         stats = [
             set_tdlib_params,
@@ -116,6 +122,7 @@ class Auth(CheckBotToken,
         while self._is_connected:
             last_state = self.send(functions.GetAuthorizationState())
             last_state_number = AuthorizationStats.get_step(last_state)
+            log.info('Last Authorization Stats: %s' % last_state_number)
             try:
                 stats[last_state_number](last_state)
             except IndexError:

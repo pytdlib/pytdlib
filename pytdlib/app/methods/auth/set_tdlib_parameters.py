@@ -1,6 +1,5 @@
-from pytdlib.app.utils import BaseTelegram
-from pytdlib.api import functions
-from pytdlib.api import types
+from pytdlib.api import functions, types
+from ...ext import BaseTelegram
 
 
 class SetTdlibParameters(BaseTelegram):
@@ -19,8 +18,8 @@ class SetTdlibParameters(BaseTelegram):
                              application_version,
                              enable_storage_optimizer,
                              ignore_file_names,
-                             files_directory: str = "",
-                             database_directory: str = ""):
+                             files_directory: str = '',
+                             database_directory: str = ''):
 
         return self.send(
             functions.SetTdlibParameters(

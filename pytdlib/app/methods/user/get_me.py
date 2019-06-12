@@ -1,5 +1,5 @@
-from pytdlib.app.utils import BaseTelegram
 from pytdlib.api import functions
+from ...ext import BaseTelegram
 
 
 class GetMe(BaseTelegram):

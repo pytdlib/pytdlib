@@ -1,5 +1,5 @@
 from threading import Event
-from pytdlib import Error
+from pytdlib.api.errors import TLError
 
 
 class Callback:
@@ -26,8 +26,8 @@ class Callback:
                 if raise_error:
                     if not self.result:
                         raise TimeoutError
-                    if isinstance(self.result, Error):
-                        raise Error
+                    if isinstance(self.result, TLError):
+                        raise self.result
             return self.result
 
     def __call__(self, *args, **kwargs):

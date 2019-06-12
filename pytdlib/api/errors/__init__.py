@@ -1,1 +1,1 @@
-from .error import Error
+from .tl_error import TLError

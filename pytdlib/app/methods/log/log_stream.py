@@ -1,6 +1,5 @@
-from pytdlib.app.utils import BaseTelegram
-from pytdlib.app.types import LogStream as Log
 from pytdlib.api import functions
+from ...ext import BaseTelegram, LogStream as Log
 
 
 class LogStream(BaseTelegram):

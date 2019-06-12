@@ -1,6 +1,5 @@
-from pytdlib.app.utils import BaseTelegram
-from pytdlib.api import functions
-from pytdlib.api import types
+from pytdlib.api import functions, types
+from ...ext import BaseTelegram
 
 
 class SetOption(BaseTelegram):

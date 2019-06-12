@@ -24,7 +24,7 @@ class Dispatcher:
             self._workers_list.append(
                 threading.Thread(
                     target=self.event_worker,
-                    name="EventWorker#{}".format(i + 1)
+                    name='EventWorker#{}'.format(i + 1)
                 )
             )
 
@@ -53,9 +53,9 @@ class Dispatcher:
     def remove_event(self, event: Update):
         for event_name in event.EVENTS:
             if event_name not in self.events:
-                raise ValueError("Event {} does not exist. Event handler was not removed.".format(event_name))
+                raise ValueError('Event {} does not exist. Event handler was not removed.'.format(event_name))
             if event.group not in self.events[event_name]:
-                raise ValueError("Group {} does not exist. Event handler was not removed.".format(event.group))
+                raise ValueError('Group {} does not exist. Event handler was not removed.'.format(event.group))
 
             self.events[event_name][event.group].remove(event)
             if not self.events[event_name][event.group]:
@@ -66,7 +66,7 @@ class Dispatcher:
 
     def event_worker(self):
         name = threading.current_thread().name
-        log.debug("%s started" % name)
+        log.debug('%s Started' % name)
         while True:
             event = self.events_queue.get()
 
@@ -96,4 +96,4 @@ class Dispatcher:
             except Exception as e:
                 log.error(e, exc_info=True)
 
-        log.debug("%s stopped" % name)
+        log.debug('%s Stopped.' % name)
